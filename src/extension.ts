@@ -95,7 +95,7 @@ async function updateCustomCommands(context: vscode.ExtensionContext): Promise<C
 		file.contributes.menus.commandPalette = commandPaletteItemsFromSettings;
 		const fileName = context.extensionPath + '/package.json';
 		await fs.writeFile(fileName, JSON.stringify(file, undefined, 4).concat('\n'));
-		const selection = await vscode.window.showInformationMessage('Custom commands have been updated. Please restart VS Code.', 'Restart VS Code');
+		const selection = await vscode.window.showInformationMessage('Command-palette (extension) have been updated. Please restart VS Code.', 'Restart VS Code');
 		if (selection === 'Restart VS Code') {
 			await vscode.commands.executeCommand('workbench.action.reloadWindow');
 		}
