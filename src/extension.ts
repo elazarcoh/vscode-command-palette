@@ -1,15 +1,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
+const deepEqual = require('deep-equal');
 
-const EXTENSION = 'command-palette';
+import { v4 as uuid } from 'uuid';
+import { CommandSettingEntry, EXTENSION, getConfiguration } from './config';
 
-interface CommandSettingEntry {
-	command: string;
-	title: string;
-	category?: string;
-	when?: string;
-	args?: any[];
-}
+const removeUndefined = (obj: any) => Object.keys(obj).reduce((acc, key) => obj[key] === undefined ? acc : { ...acc, [key]: obj[key] }, {});
 
 interface Command {
 	command: string;
@@ -27,9 +23,14 @@ interface CommandToRegister {
 	args: any[];
 }
 
+
 function customId(command: string): string {
 	return `${EXTENSION}.${command}`;
 }
+function workspaceContextKey(): string {
+	return `${EXTENSION}.workspaceId`;
+}
+
 function toCustomCommand(command: CommandSettingEntry): Command {
 	return {
 		command: customId(command.command),
@@ -40,79 +41,93 @@ function toCustomCommand(command: CommandSettingEntry): Command {
 function toCommandPaletteItem(command: CommandSettingEntry): CommandPaletteItem {
 	return {
 		command: customId(command.command),
-		when: command.when ?? 'true'
+		when: command.when ?? 'true',
+	};
+}
+function toWorkspaceCommandPaletteItem(command: CommandSettingEntry, workspaceId: string): CommandPaletteItem {
+	return {
+		command: customId(command.command),
+		when: `${workspaceContextKey()} == ${workspaceId} && ` + (command.when ?? 'true'),
 	};
 }
 function toCommandToRegister(command: CommandSettingEntry): CommandToRegister {
 	return {
 		command: customId(command.command),
 		originalCommand: command.command,
-		args: command.args ?? []
+		args: command.args ?? [],
 	};
 }
 
-async function updateCustomCommands(context: vscode.ExtensionContext): Promise<CommandToRegister[]> {
+async function updateCustomCommands(
+	context: vscode.ExtensionContext,
+	workspaceId: string,
+): Promise<CommandToRegister[]> {
 
-	const customCommandsSetting = vscode.workspace.getConfiguration(EXTENSION).get<CommandSettingEntry[]>('commands', []);
-
+	// global commands
+	const customCommandsSetting = getConfiguration('commands') ?? [];
 	const customCommandsFromSettings = customCommandsSetting.map(toCustomCommand);
 	const commandPaletteItemsFromSettings = customCommandsSetting.map(toCommandPaletteItem);
 
-	const file = context.extension.packageJSON
-	const currentCustomCommands: Command[] = file.contributes.commands;
-	const currentCommandPaletteItems: CommandPaletteItem[] = file.contributes.menus.commandPalette;
+	// workspace commands
+	const customWorkspaceCommandsSetting = getConfiguration('workspaceCommands') ?? [];
+	const customWorkspaceCommandsFromSettings = customWorkspaceCommandsSetting.map(toCustomCommand);
+	const workspaceCommandPaletteItemsFromSettings = customWorkspaceCommandsSetting.map(c => toWorkspaceCommandPaletteItem(c, workspaceId));
 
-	let anyChanges = false;
-	anyChanges ||= currentCustomCommands.length !== customCommandsFromSettings.length;
-	anyChanges ||= currentCommandPaletteItems.length !== commandPaletteItemsFromSettings.length;
-	if (!anyChanges) {
-		const customCommandsFromSettingsSorted = customCommandsFromSettings.sort((a, b) => a.command.localeCompare(b.command));
-		const currentCustomCommandsSorted = currentCustomCommands.sort((a, b) => a.command.localeCompare(b.command));
-		for (let i = 0; i < currentCustomCommandsSorted.length && !anyChanges; i++) {
-			if (
-				currentCustomCommandsSorted[i].command !== customCommandsFromSettingsSorted[i].command
-				|| currentCustomCommandsSorted[i].title !== customCommandsFromSettingsSorted[i].title
-				|| currentCustomCommandsSorted[i].category !== customCommandsFromSettingsSorted[i].category) {
-				anyChanges = true;
-				break;
-			}
-		}
+	// current commands
+	const packageJSON = context.extension.packageJSON
+	const currentCustomCommands: Command[] = packageJSON.contributes.commands.map(removeUndefined);
+	const currentCommandPaletteItems: CommandPaletteItem[] = packageJSON.contributes.menus.commandPalette.map(removeUndefined);
 
-		const commandPaletteItemsFromSettingsSorted = commandPaletteItemsFromSettings.sort((a, b) => a.command.localeCompare(b.command));
-		const currentCommandPaletteItemsSorted = currentCommandPaletteItems.sort((a, b) => a.command.localeCompare(b.command));
-		for (let i = 0; i < currentCommandPaletteItemsSorted.length && !anyChanges; i++) {
-			if (
-				currentCommandPaletteItemsSorted[i].command !== commandPaletteItemsFromSettingsSorted[i].command
-				|| currentCommandPaletteItemsSorted[i].when !== commandPaletteItemsFromSettingsSorted[i].when) {
-				anyChanges = true;
-				break;
-			}
+	// copy other workspace commands
+	for (let i = 0; i < currentCustomCommands.length; i++) {
+		const command = currentCustomCommands[i];
+		const commandPaletteItem = currentCommandPaletteItems[i];
+		if (commandPaletteItem.when.includes(workspaceContextKey()) && !commandPaletteItem.when.includes(workspaceId)) {
+			customCommandsFromSettings.push(command);
+			commandPaletteItemsFromSettings.push(commandPaletteItem);
 		}
 	}
 
+	// combine commands
+	const customCommands = [...customCommandsFromSettings, ...customWorkspaceCommandsFromSettings].map(removeUndefined);
+	const commandPaletteItems = [...commandPaletteItemsFromSettings, ...workspaceCommandPaletteItemsFromSettings].map(removeUndefined);
+
+	let anyChanges = false;
+	anyChanges ||= !deepEqual(customCommands, currentCustomCommands);
+	anyChanges ||= !deepEqual(commandPaletteItems, currentCommandPaletteItems);
+
 	if (anyChanges) {
-		file.contributes.commands = customCommandsFromSettings;
-		file.contributes.menus.commandPalette = commandPaletteItemsFromSettings;
+		packageJSON.contributes.commands = customCommands;
+		packageJSON.contributes.menus.commandPalette = commandPaletteItems;
 		const fileName = context.extensionPath + '/package.json';
-		await fs.writeFile(fileName, JSON.stringify(file, undefined, 4).concat('\n'));
+		await fs.writeFile(fileName, JSON.stringify(packageJSON, undefined, 4).concat('\n'));
 		const selection = await vscode.window.showInformationMessage('Command-palette (extension) have been updated. Please restart VS Code.', 'Restart VS Code');
 		if (selection === 'Restart VS Code') {
 			await vscode.commands.executeCommand('workbench.action.reloadWindow');
 		}
 	}
-	return customCommandsSetting.map(toCommandToRegister);
+	
+	return [...customCommandsSetting, ...customWorkspaceCommandsSetting].map(toCommandToRegister);
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+	let maybeWorkspaceId = context.workspaceState.get<string>('workspaceId');
+	if (!maybeWorkspaceId) {
+		maybeWorkspaceId = uuid();
+		await context.workspaceState.update('workspaceId', maybeWorkspaceId);
+	}
+	const workspaceId = maybeWorkspaceId;
+	await vscode.commands.executeCommand('setContext', workspaceContextKey(), workspaceId);
+
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration(EXTENSION)) {
-				updateCustomCommands(context);
+				updateCustomCommands(context, workspaceId);
 			}
 		})
 	);
 
-	const commands = await updateCustomCommands(context);
+	const commands = await updateCustomCommands(context, workspaceId);
 	for (const command of commands) {
 		context.subscriptions.push(
 			vscode.commands.registerCommand(command.command, async () => {
