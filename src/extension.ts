@@ -78,7 +78,7 @@ async function updateCustomCommands(
 	const currentCustomCommands: Command[] = packageJSON.contributes.commands.map(removeUndefined);
 	const currentCommandPaletteItems: CommandPaletteItem[] = packageJSON.contributes.menus.commandPalette.map(removeUndefined);
 
-	// copy other workspace commands
+	// copy commands from other workspaces, as we don't want to overwrite them
 	for (let i = 0; i < currentCustomCommands.length; i++) {
 		const command = currentCustomCommands[i];
 		const commandPaletteItem = currentCommandPaletteItems[i];
