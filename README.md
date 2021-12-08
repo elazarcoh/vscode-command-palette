@@ -8,6 +8,14 @@ It can be used, for example, with the [multi-command](https://marketplace.visual
 
 ## How to use
 
+* `command`: The command to add to the Command Palette.
+* `title`: The title of the command.
+* `category`: The category of the command. Optional.
+* `when`: The condition to show the command. Optional.
+* `args`: The arguments for the command. Optional.
+
+### Global commands
+
 Add the following to your global ("User") settings:
 
 ```jsonc
@@ -34,11 +42,9 @@ Add the following to your global ("User") settings:
 ]
 ```
 
-* `command`: The command to add to the Command Palette.
-* `title`: The title of the command.
-* `category`: The category of the command. Optional.
-* `when`: The condition to show the command. Optional.
-* `args`: The arguments for the command. Optional.
-
 When modifying the `command-palette.commands` setting, VSCode must be restarted for the changes to take effect.
 A notification will be shown, asking to restart VSCode.
+
+### Workspace commands
+
+Use the `command-palette.workspaceCommands` in a workspace settings file to add commands to the Command Palette for a specific workspace.
