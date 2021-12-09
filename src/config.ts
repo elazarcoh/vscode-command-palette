@@ -40,6 +40,14 @@ export interface Config {
      * @scope window 
      */
     workspaceCommands: CommandSettingEntry[];
+    /**
+     * @scope machine
+     */
+    commandsFromFile: string;
+    /**
+     * @scope window
+     */
+    workspaceCommandsFromFile: string;
 }
 
 export const getConfiguration = configUtils.ConfigurationGetter<Config>(EXTENSION);

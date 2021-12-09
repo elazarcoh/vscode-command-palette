@@ -57,6 +57,10 @@
                     },
                     "scope": "machine"
                 },
+                "command-palette.commandsFromFile": {
+                    "type": "string",
+                    "scope": "machine"
+                },
                 "command-palette.workspaceCommands": {
                     "type": "array",
                     "items": {
@@ -90,6 +94,10 @@
                         ],
                         "additionalProperties": false
                     },
+                    "scope": "window"
+                },
+                "command-palette.workspaceCommandsFromFile": {
+                    "type": "string",
                     "scope": "window"
                 }
             }
