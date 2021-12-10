@@ -2423,10 +2423,10 @@ v8-compile-cache@^2.0.3:
   resolved "https://registry.yarnpkg.com/v8-compile-cache/-/v8-compile-cache-2.3.0.tgz#2de19618c66dc247dcfb6f99338035d8245a2cee"
   integrity sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==
 
-vscode-extensions-json-generator@^0.1.4:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/vscode-extensions-json-generator/-/vscode-extensions-json-generator-0.1.4.tgz#3a742cf72a9762486b8fee878ce35d7bd3776824"
-  integrity sha512-19zOa8DEhq5LSUgVTw5RX9byqQUEqCF6tciEubfLh6N3DYvjXc+lR/imv/maAc7hNhRki/YjjllqVNlueSPJXA==
+vscode-extensions-json-generator@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/vscode-extensions-json-generator/-/vscode-extensions-json-generator-0.1.5.tgz#e7e97bdcbcd8bd822e078436d70cf95d3f4920c1"
+  integrity sha512-EMMzrEpWO4fkQfUGxGyPL1hkwnowcee5OUCMLOY1CYtt6AdaI/H5qZOJ/PF1lYpLqnTFTRS2ftwJuzl13NM72Q==
   dependencies:
     ajv "^8.6.3"
     better-ajv-errors "^0.8.2"
