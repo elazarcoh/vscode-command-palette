@@ -7,8 +7,6 @@ There are two ways to add commands to the Command Palette:
 1. Using an existing command, which is missing from the Command Palette. One example (for the time of writing) is the `editor.debug.action.selectionToRepl` command.
 1. Creating a new command, by writing its code. This is a way to add commands that you need without have to create a dedicated VSCode extension.
 
-The only reason to use this extension is if you want to add an existing command, which is not available in the Command Palette, to the Command Palette.
-
 It can be used, for example, with the [multi-command](https://marketplace.visualstudio.com/items?itemName=ryuta46.multi-command) extension.
 
 ## How to use with existing commands
