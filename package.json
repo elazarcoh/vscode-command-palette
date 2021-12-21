@@ -1,6 +1,11 @@
 {
   "name": "command-palette",
   "publisher": "elazarcoh",
+  "repository": {
+    "type": "git",
+    "url": "github.com/elazarcoh/vscode-command-palette"
+  },
+  "license": "MIT",
   "displayName": "command-palette",
   "description": "",
   "version": "0.0.1",
@@ -11,7 +16,7 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
