@@ -7,8 +7,17 @@ import { CommandSettingEntry, EXTENSION, getConfiguration } from './config';
 import { loadExternalCommands } from './externalCommands';
 import * as path from 'path';
 import { fileExists, mtime, removeUndefined, XOR } from './utils';
+const vscodeVariables = require('vscode-variables');
 
 
+function resolve(v: any): any {
+	if (typeof v === 'string') {
+		return vscodeVariables(v);
+	}
+	else {
+		return v;
+	}
+}
 function customId(command: string): string {
 	return `${EXTENSION}.${command}`;
 }
@@ -144,6 +153,7 @@ async function getFileCommands(
 		commandsToRegister: commands.commandsToRegister.map(toCommandToRegisterFromAction).map(removeUndefined),
 	}
 }
+
 async function getWorkspaceFileCommands(
 	context: vscode.ExtensionContext,
 	workspaceId: string,
@@ -173,7 +183,6 @@ async function updateCommandsToPackageJson(toUpdate: CommandsToUpdate, packageJS
 	}
 }
 
-
 function isCommandToRegisterFromAction(command: CommandToRegisterFromAction | CommandToRegisterFromOriginal): command is CommandToRegisterFromAction {
 	return (command as CommandToRegisterFromAction).action !== undefined;
 }
@@ -182,11 +191,11 @@ function registerCommand(command: CommandToRegisterFromAction | CommandToRegiste
 	if (isCommandToRegisterFromAction(command)) {
 		return vscode.commands.registerCommand(command.command, async () => {
 			const more = { vscode, originalLocation: command.originalScriptLocation };
-			await command.action(...command.args, more);
+			await command.action(...command.args.map(resolve), more);
 		})
 	} else {
 		return vscode.commands.registerCommand(command.command, async () => {
-			await vscode.commands.executeCommand(command.originalCommand, ...command.args);
+			await vscode.commands.executeCommand(command.originalCommand, ...command.args.map(resolve));
 		})
 	}
 }
